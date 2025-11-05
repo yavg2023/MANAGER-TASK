@@ -1,0 +1,40 @@
+{
+<<<<<<< HEAD
+    "name": "task_manager_full_sqlite",
+    "short_name": "task_manager_full_sqlite",
+=======
+    "name": "task_manager_flutter_complete",
+    "short_name": "task_manager_flutter_complete",
+>>>>>>> cbe15e97e9cfd517c18122b48ef1ad78029d4720
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0175C2",
+    "theme_color": "#0175C2",
+    "description": "A new Flutter project.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

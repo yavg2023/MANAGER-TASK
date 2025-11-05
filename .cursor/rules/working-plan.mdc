@@ -1,0 +1,190 @@
+---
+alwaysApply: false
+---
+# Working Plan Generation Rule
+
+## Objetivo
+Esta rule define cómo Cursor debe generar planes de trabajo estructurados para implementar features o realizar desarrollos específicos en la aplicación de gestión de tareas.
+
+## Directiva de Uso
+**Aplicar esta rule cuando:**
+- El usuario solicite crear un plan de trabajo para una feature nueva
+- El usuario solicite un plan para implementar mejoras específicas
+- El usuario solicite organizar tareas de desarrollo
+
+## Estructura de Planes de Trabajo
+
+### 1. Ubicación y Nomenclatura
+- **Ubicación**: Todos los planes se guardan en `.specs/`
+- **Formato de nombre**: `NNNN-nombre-descriptivo.md`
+  - `NNNN`: Número consecutivo de 4 dígitos (0001, 0002, 0003, etc.)
+  - `nombre-descriptivo`: Nombre en kebab-case que describe la feature o desarrollo
+  - Ejemplo: `0001-manejo-errores-validaciones.md`
+
+### 2. Estructura del Documento
+
+Cada plan debe seguir esta estructura mínima:
+
+```markdown
+# [NNNN] Nombre Descriptivo de la Feature
+
+## 📋 Resumen Ejecutivo
+Breve descripción (2-3 párrafos) de qué se va a implementar y por qué.
+
+## 🎯 Objetivos
+Lista numerada de objetivos claros y medibles:
+1. Objetivo 1
+2. Objetivo 2
+3. Objetivo 3
+
+## 📦 Estructura de Implementación
+
+### Fase 1: [Nombre de la Fase]
+**Orden lógico**: Esta fase debe ejecutarse primero/después de X porque...
+
+**Archivos a crear/modificar**:
+- `ruta/archivo.dart` - Descripción breve del cambio
+- `ruta/archivo2.dart` - Descripción breve del cambio
+
+**Pasos**:
+1. Paso granular específico
+2. Otro paso granular específico
+3. Siguiente paso...
+
+**Criterios de aceptación**:
+- [ ] Criterio 1
+- [ ] Criterio 2
+
+### Fase 2: [Nombre de la Fase]
+[Estructura similar...]
+
+## ✅ Checklist de Implementación
+
+### Fase 1: [Nombre]
+- [ ] Paso 1 completado
+- [ ] Paso 2 completado
+
+### Fase 2: [Nombre]
+- [ ] Paso 1 completado
+
+## 📝 Notas de Implementación
+Espacio para notas durante la implementación.
+
+## 🚀 Próximos Pasos
+Opcional: qué podría venir después de esta implementación.
+```
+
+### 3. Características Mínimas
+
+#### 3.1. Organización por Fases
+- **Cada fase** debe ser un elemento específico de la estructura del proyecto (modelos, servicios, providers, screens, widgets, etc.)
+- **Orden lógico**: Las fases deben tener un orden de ejecución claro (por ejemplo: modelos → servicios → providers → UI)
+- **Dependencias**: Si una fase depende de otra, debe indicarse claramente
+
+#### 3.2. Pasos Granulares
+- Cada fase debe tener pasos específicos y accionables
+- Los pasos deben ser incrementales (no hacer todo en un solo paso)
+- Cada paso debe ser verificable
+
+#### 3.3. Fragmentos Explicativos
+- **NO incluir código fuente completo** en el plan
+- **SÍ incluir fragmentos** que auto-explican los cambios necesarios
+- Los fragmentos deben ser suficientes para entender el cambio sin ser exhaustivos
+
+#### 3.4. Estructura Simple
+- Evitar complejidad innecesaria
+- El plan debe ser fácil de entender por el usuario
+- Priorizar claridad sobre exhaustividad
+
+### 4. Flujo de Trabajo
+
+#### 4.1. Generación del Plan
+Cuando el usuario solicite un plan:
+1. Identificar el siguiente número consecutivo (verificar `.specs/` para el último número usado)
+2. Generar el plan siguiendo la estructura definida
+3. Guardar el archivo en `.specs/` con el nombre correcto
+4. Presentar el plan al usuario para revisión
+
+#### 4.2. Implementación por Fases
+Durante la implementación:
+1. **Completar una fase completa** antes de continuar
+2. **Detener automáticamente** después de completar cada fase
+3. **Solicitar al usuario**:
+   - Realizar revisiones/verificaciones pertinentes
+   - Aprobar la fase completada
+4. **Actualizar el progreso** en el plan (marcar checkboxes completados)
+5. **Preguntar al usuario** si desea continuar con la siguiente fase
+
+#### 4.3. Actualización del Plan
+- Marcar como completados los pasos de cada fase
+- Agregar notas en "Notas de Implementación" si es necesario
+- Mantener el documento actualizado durante toda la implementación
+
+### 5. Referencia a Rules de Cursor
+- Los planes deben considerar las mejores prácticas definidas en `feature-structure.mdc`
+- Los planes deben respetar el alcance funcional definido en `app-scope.mdc`
+- Cuando sea relevante, hacer referencia a prácticas específicas del feature-structure
+- Identificar claramente el módulo al que pertenece cada feature (security, tasks, backoffice)
+- Asegurar consistencia con el marco de implementación establecido
+
+### 5.1. Consideraciones Multiplataforma
+- **Siempre considerar soporte multiplataforma**: La aplicación soporta Web (SharedPreferences) y Mobile/Desktop (SQLite)
+- **Consistencia entre plataformas**: Las funcionalidades deben implementarse en ambas plataformas con comportamiento consistente
+- **Mencionar en planes**: Cuando una feature afecta persistencia, indicar claramente cómo se implementa en cada plataforma
+- **Ejemplos específicos**:
+  - Migraciones de BD: Solo aplican a SQLite (mobile/desktop), mencionar que web no requiere migraciones automáticas
+  - Cambios en modelo: Deben reflejarse en ambos servicios (IO y Web)
+  - Filtrado/Ordenamiento: Implementar en SQL con WHERE/ORDER BY (SQLite) y en memoria (Web)
+- **Ver referencia**: Consultar `REPORTE-PERSISTENCIA-MULTIPLATAFORMA.md` para detalles sobre aislamiento por usuario y estrategias multiplataforma
+
+### 6. Ejemplo de Plan Mínimo
+
+```markdown
+# [0001] Agregar Autenticación
+
+## 📋 Resumen Ejecutivo
+Implementar un sistema básico de autenticación para proteger el acceso a las tareas.
+
+## 🎯 Objetivos
+1. Crear modelo de usuario
+2. Implementar servicio de autenticación
+3. Agregar pantalla de login funcional
+
+## 📦 Estructura de Implementación
+
+### Fase 1: Modelo de Usuario
+**Orden lógico**: Primero porque otros componentes dependen de él.
+
+**Archivos a crear**:
+- `lib/models/security/user.dart` - Modelo de usuario con email y password
+
+**Pasos**:
+1. Crear clase User con campos email y password
+2. Agregar método toMap/fromMap
+3. Verificar que compile sin errores
+
+**Criterios de aceptación**:
+- [ ] Modelo User creado
+- [ ] Serialización implementada
+- [ ] Sin errores de linter
+
+### Fase 2: Servicio de Autenticación
+**Orden lógico**: Después del modelo, antes del provider.
+
+**Archivos a crear**:
+- `lib/services/security/auth_service.dart` - Lógica de autenticación
+
+**Pasos**:
+1. Crear clase AuthService
+2. Implementar método login()
+3. Implementar método logout()
+
+[Continúa...]
+```
+
+## Recordatorios Importantes
+- **Simple y claro**: No sobre-ingeniería en los planes
+- **Incremental**: Dividir en fases pequeñas y manejables
+- **Verificable**: Cada paso debe poder ser verificado
+- **Pausable**: Detener después de cada fase para revisión
+- **Actualizable**: Mantener el plan actualizado durante la implementación

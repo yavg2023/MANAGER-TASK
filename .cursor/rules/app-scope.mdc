@@ -1,0 +1,202 @@
+---
+alwaysApply: true
+---
+
+# Application Functional Scope
+
+## Objetivo
+Esta rule define el alcance funcional mínimo de la aplicación de gestión de tareas. Sirve como documento de requisitos para evitar que la IA genere funcionalidades no incluidas en el alcance del proyecto.
+
+## Directiva de Uso
+**Aplicar esta rule siempre** al generar código o planes de trabajo para asegurar que solo se implementen funcionalidades dentro del alcance definido.
+
+## Módulos del Sistema
+
+### 1. security
+**Propósito**: Módulo de autenticación y autorización.
+
+**Entidades**:
+- `User`: Entidad de usuario con email, password y role.
+
+**Roles**:
+- `user`: Rol de usuario regular. Acceso al módulo `tasks`.
+- `admin`: Rol de administrador. Acceso al módulo `backoffice`.
+
+**Features**:
+
+- `login`: Autenticación de usuario. Feature pública.
+  - **Interfaz de Usuario**: Ventana de login que muestra únicamente dos campos:
+    - Campo de texto para **email** (input de tipo email).
+    - Campo de texto para **contraseña** (input de tipo password con ocultación de caracteres).
+  - **Funcionalidad**: Permite autenticar al usuario con sus credenciales (email y contraseña). Al autenticarse exitosamente, redirige a `/home`.
+  - **Splash Screen**: El splash screen debe mostrarse **antes del login** como pantalla de carga inicial de la aplicación, no después del login ni durante la carga del home.
+  - **Restricciones**: No incluye funcionalidad de recuperación de contraseña, olvido de contraseña, ni reset de contraseña. Solo permite autenticación con email y contraseña.
+
+- `register`: Registro de nuevo usuario. Feature pública.
+  - **Acceso desde UI**: La ventana de login debe incluir un CTA (Call To Action), normalmente un enlace o botón tipo "Registrarse" o "Crear cuenta", que navega a la pantalla de registro.
+  - **Interfaz de Usuario**: Formulario de registro que incluye los siguientes campos:
+    - Campo de texto para **email** (input de tipo email).
+    - Campo de texto para **contraseña** (input de tipo password con ocultación de caracteres).
+    - Campo de texto para **confirmar contraseña** (input de tipo password con ocultación de caracteres).
+  - **Validaciones de Email**:
+    - Debe validar formato de email estándar (formato RFC 5322 básico).
+    - Utilizar validación de email proporcionada por Flutter/Dart estándar o librería de validación.
+  - **Validaciones de Contraseña**:
+    - **Caracteres permitidos**: Números (0-9), caracteres alfabéticos (a-z, A-Z), y caracteres especiales acotados a los normales (por ejemplo: `!@#$%^&*()_+-=[]{}|;:,.<>?`).
+    - **Longitud mínima**: 8 caracteres.
+    - **Longitud máxima**: 32 caracteres.
+    - **Validación de coincidencia**: La contraseña y la confirmación de contraseña deben ser idénticas.
+  - **Restricción de Rol**: Solo se permite registrar usuarios con rol `user`. No se puede registrar usuarios con rol `admin` desde esta funcionalidad.
+  - **Almacenamiento de Contraseña**:
+    - La contraseña debe almacenarse en la base de datos con codificación/encriptación.
+    - **Recomendación técnica**: Utilizar hash de contraseña con algoritmos seguros como bcrypt o argon2.
+    - **Librería sugerida para Dart/Flutter**: `crypto` (package:crypto) para hash básico, o preferiblemente `bcrypt` (package:bcrypt) o `argon2` (package:argon2) para mayor seguridad. (El usuario prefiere `bcrypt`)
+    - La contraseña en texto plano NUNCA debe almacenarse directamente en la base de datos.
+
+**Restricciones**:
+- No incluir reset de contraseña.
+- No incluir recuperación de contraseña.
+- No incluir olvido de contraseña.
+- Control de acceso por rol: verificar rol después de autenticación y dar acceso solo al módulo correspondiente.
+- Solo usuarios con rol `user` pueden registrarse mediante la funcionalidad `register`. Los usuarios con rol `admin` deben ser creados directamente en la base de datos o mediante mecanismo administrativo fuera del alcance de esta aplicación. 
+- Debemos crear un usuario administrador por defecto para el sistema, como semilla en la base de datos, este usuario debe llamarse `admin@task-manager.com` y la clave debe ser `TaskManager1990*`.
+
+---
+
+### 2. tasks
+**Propósito**: Gestión de tareas del usuario en formato de lista.
+
+**Entidades**:
+- `Task`: Entidad con id (autonumerado), title, description, completed (boolean), createdAt (timestamp UTC).
+
+**Features**:
+- Dashboard tipo lista para visualización de tareas.
+  - **Ordenamiento por defecto**: Las tareas se muestran ordenadas descendentemente por fecha de creación (`createdAt DESC`).
+  - **Scroll infinito**: La lista utiliza scroll infinito (infinite scroll) para cargar más tareas a medida que el usuario hace scroll, no utiliza paginación tradicional con páginas.
+  - **Ordenamiento configurable**: El usuario puede cambiar el orden de las tareas:
+    - Por **título** (ascendente o descendente)
+    - Por **fecha de creación** (`createdAt`) (ascendente o descendente)
+  - **Filtrado**:
+    - **Por título**: Campo de búsqueda que filtra tareas por título usando búsqueda tipo LIKE/fragmento de texto.
+    - **Por estado completado**: Filtro que permite mostrar solo tareas completadas (`completed = true`), solo pendientes (`completed = false`), o todas las tareas.
+- `create`: Crear nueva tarea mediante `TaskDetailScreen`.
+  - **Acceso desde UI**: El dashboard muestra la lista de tareas y un CTA (Call To Action) general, normalmente un botón flotante o botón de "Nueva tarea", que abre `TaskDetailScreen` con los campos vacíos para crear una nueva tarea.
+- `update`: Actualizar tarea existente mediante `TaskDetailScreen`.
+  - **Acceso desde UI**: Al hacer clic en una tarjeta de tarea en el dashboard, se abre `TaskDetailScreen` con los datos de la tarea precargados para su edición.
+- `delete`: Eliminación física de tarea.
+  - **Acceso desde UI**: Cada tarjeta de tarea en el dashboard debe tener un icono de eliminar (normalmente un botón con icono de basura/papelera). Al hacer clic en este icono, se debe mostrar un diálogo de confirmación al usuario solicitando confirmación de la eliminación. Una vez confirmada, se realiza la eliminación física de la tarea en la base de datos.
+
+**Nota técnica sobre `TaskDetailScreen`**:
+- `TaskDetailScreen` es la pantalla compartida que se utiliza tanto para crear (`create`) como para actualizar (`update`) tareas.
+- Cuando se invoca para `create`, los campos vienen vacíos.
+- Cuando se invoca para `update`, los campos vienen precargados con los datos de la tarea seleccionada.
+- `TaskDetailScreen` permite editar título, descripción y estado de completado de la tarea.
+
+**Reglas de Negocio**:
+- Una tarea con `completed = true` **NO puede ser actualizada**. Para poder actualizar una tarea completada, primero se debe desmarcar el estado completado (cambiar a `completed = false`).
+- NO se requiere validar que el título de una tarea sea único. Es decisión del usuario permitir títulos duplicados.
+- `createdAt` es visible para el usuario pero no editable.
+- `createdAt` se almacena en UTC en base de datos.
+- `createdAt` se muestra traducido al locale del usuario en pantalla.
+- Accesible solo para rol `user`.
+
+**Vínculo entre acciones CRUD y acciones en pantalla**:
+- **CREATE** → CTA general en dashboard → Abre `TaskDetailScreen` (campos vacíos)
+- **UPDATE** → Clic en tarjeta de tarea en dashboard → Abre `TaskDetailScreen` (campos precargados)
+- **DELETE** → Icono de eliminar en tarjeta de tarea → Diálogo de confirmación → Eliminación física
+- **READ** → Visualización de tareas en el dashboard (lista de tarjetas)
+
+---
+
+### 3. backoffice
+**Propósito**: Dashboard administrativo para gestión de todas las tareas de todos los usuarios.
+
+**Entidades**:
+- `Task`: Acceso a todas las tareas de todos los usuarios.
+- `User`: Para filtrado y búsqueda.
+
+**Features**:
+- Dashboard con tabla paginada de todas las tareas.
+- `filterByUser`: Filtrar por usuario mediante búsqueda por email o nombre (búsqueda tipo LIKE/fragmento de texto).
+- `filterByDate`: Filtrar por fecha de creación de tareas.
+- `filterByTaskId`: Búsqueda por ID de tarea.
+- `filterByTaskTitle`: Búsqueda por título de tarea (búsqueda tipo LIKE/fragmento de texto).
+- `viewTaskDetail`: Visualizar detalle completo de una tarea en una ventana modal o diálogo (solo visualización, sin edición).
+
+**Interfaz de Usuario - Barra de Filtros**:
+- La barra de filtros debe mostrarse en la parte superior del dashboard backoffice.
+- Debe incluir como mínimo los siguientes controles:
+  - **Campo de búsqueda por ID de tarea**: Campo de texto (input) para ingresar el ID numérico de la tarea.
+  - **Campo de búsqueda por título**: Campo de texto (input) para buscar por título de tarea (búsqueda tipo LIKE).
+  - **Campo de búsqueda por usuario**: Campo de texto (input) para buscar por email o nombre de usuario (búsqueda tipo LIKE).
+  - **Selector de fecha**: Control de fecha (date picker) para filtrar por fecha de creación.
+  - **Botón de limpiar filtros**: Botón para resetear todos los filtros y mostrar todas las tareas.
+
+**Interfaz de Usuario - Tabla de Tareas**:
+- La lista de tareas debe mostrarse en formato de tabla (data table).
+- **Columnas de la tabla** (orden de izquierda a derecha):
+  1. **ID**: Identificador numérico de la tarea.
+  2. **Título**: Título de la tarea.
+  3. **Estado completado**: Indicador visual (check, icono, o texto) que muestra si la tarea está completada o no.
+  4. **Fecha de creación**: Fecha de creación de la tarea, mostrada en formato legible para el usuario (traducida desde UTC).
+  5. **Acciones**: Columna con icono de visualizar (ojo o similar) para ver el detalle completo de la tarea.
+- **NOTA**: La tabla NO debe mostrar la columna de descripción de la tarea. La descripción completa solo es visible al hacer clic en el icono de visualizar.
+- **Ordenamiento**: Los registros deben estar organizados por fecha de creación de forma ascendente (más antiguas primero) por defecto.
+- **Paginación**:
+  - La paginación debe realizarse a nivel de base de datos (server-side pagination), no solo a nivel de UI.
+  - Por defecto, se deben mostrar **10 registros por página**.
+  - Debe existir un selector que permita cambiar la cantidad de registros por página con las opciones: **10, 25, 50**.
+  - La tabla debe mostrar controles de paginación (botones de anterior/siguiente, número de página actual, total de páginas).
+- **Acción de visualizar**:
+  - Cada fila debe tener un icono de visualizar (normalmente un icono de ojo o "ver") en la columna de acciones.
+  - Al hacer clic en este icono, se debe abrir una ventana modal, diálogo o pantalla que muestre **todos los detalles de la tarea** (ID, título, descripción, estado completado, fecha de creación, usuario propietario si aplica).
+  - Esta ventana es **solo de visualización**, no permite editar los datos.
+
+**Reglas de Negocio - Filtrado por Fecha**:
+- El frontend envía fecha en formato `YYYY-MM-DD`.
+- Frontend convierte fecha local a timestamp UTC con hora inicio `00:00:00`.
+- Servicio construye rango:
+  - Fecha inicial: timestamp UTC recibido (>=).
+  - Fecha final: fecha inicial + 24 horas (intervalo abierto, usando <).
+- Consulta en BD usa `>= fechaInicial AND < fechaFinal`.
+
+**Accesibilidad**:
+- Accesible solo para rol `admin`.
+
+---
+
+## Comportamiento Transversal - Home Dashboard
+
+**Propósito**: La pantalla home (ruta `/home`) es un componente transversal que actúa como punto de entrada después del login y debe mostrar el dashboard correspondiente según el rol del usuario autenticado.
+
+**Funcionalidad**:
+- Después de la autenticación exitosa, el usuario es redirigido a `/home`.
+- El home debe determinar qué dashboard mostrar basándose en el rol del usuario autenticado:
+  - **Rol `user`**: Muestra el dashboard de tareas en formato lista (definido en el módulo `tasks`).
+  - **Rol `admin`**: Muestra el dashboard backoffice (definido en el módulo `backoffice`).
+- Cada dashboard será implementado y definido en su respectivo módulo (`tasks` o `backoffice`).
+- El home actúa como un router/selector que delega la visualización al dashboard correspondiente según el rol.
+
+**Responsabilidad**:
+- Verificar el rol del usuario autenticado.
+- Mostrar el dashboard apropiado según el rol.
+- No contiene lógica de negocio específica de cada dashboard, solo la lógica de selección basada en rol.
+
+**Nota sobre comportamiento inicial (antes del módulo security)**:
+- Mientras el módulo `security` no esté implementado, el `HomeScreen` muestra el dashboard de tareas con todas las tareas disponibles (sin filtrado por usuario).
+- Este es un comportamiento temporal que debe documentarse con comentarios TODO en el código indicando que se debe implementar la lógica de autorización cuando exista el módulo `security`.
+- Una vez implementado el módulo `security`, el `HomeScreen` debe filtrar las tareas por el usuario autenticado según el rol.
+
+---
+
+## Alcance Mínimo
+
+Este documento define el alcance funcional mínimo para esta aplicación. **NO implementar funcionalidades fuera de este alcance** sin solicitud explícita del usuario.
+
+## Términos Técnicos
+
+- **Módulos**: security, tasks, backoffice
+- **Entidades**: User, Task
+- **Roles**: user, admin
+- **Features**: login, register, create, update, delete, filterByUser, filterByDate, filterByTaskId, filterByTaskTitle, viewTaskDetail
+- **Componentes Transversales**: home (router basado en rol)
