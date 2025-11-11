@@ -1,0 +1,695 @@
+---
+alwaysApply: true
+---
+
+# Database Versioning and Migration Rule
+
+## Objetivo
+Esta rule define el estándar para manejar versionamiento y migraciones de base de datos SQLite en la aplicación. Establece lineamientos claros para que las actualizaciones de schema se ejecuten automáticamente sin requerir intervención manual del usuario.
+
+## Directiva de Uso
+**Aplicar esta rule siempre** al:
+- Modificar el schema de base de datos (agregar columnas, tablas, índices)
+- Cambiar la estructura de tablas existentes
+- Implementar nuevas funcionalidades que requieran cambios en BD
+
+## Principios Fundamentales
+
+### 1. Sistema de Versionamiento Automático
+- **Versión actual**: Se obtiene automáticamente de `MigrationRegistry`
+- **Migraciones automáticas**: Se ejecutan mediante callback `onUpgrade` cuando la versión aumenta
+- **Inicialización explícita**: Las migraciones se ejecutan durante la inicialización de la app (ej: `SplashScreen`)
+- **BD local**: Los datos son tolerables de perder, por lo que las migraciones pueden ser simples
+
+### 2. Estructura Modular de Migraciones
+- **Separación de responsabilidades**: Cada migración se implementa en su propio archivo
+- **Registro centralizado**: Todas las migraciones se registran en un único punto
+- **Ejecución automática**: `DatabaseIO` descubre y ejecuta migraciones durante la inicialización
+- **Organización clara**: Estructura de carpetas específica para migraciones
+
+### 3. Estructura de Versiones
+- **Versión inicial**: Siempre comienza en `1`
+- **Incremento secuencial**: Cada cambio de schema incrementa la versión en `1` (1 → 2 → 3...)
+- **Una versión, una migración**: Cada versión debe tener su archivo de migración correspondiente
+
+### 4. Callbacks de sqflite
+- **`onCreate`**: Se ejecuta solo cuando se crea la BD por primera vez (versión inicial)
+- **`onUpgrade`**: Se ejecuta automáticamente cuando la versión de la BD existente es menor que la versión especificada
+- **Ambos callbacks**: Deben actualizarse cuando se cambia el schema
+
+## Estructura de Directorios y Archivos
+
+### Ubicación del Código
+
+```
+lib/utils/
+├── database_io.dart              # Controlador SQLite para mobile/desktop
+├── database_web.dart             # Inicialización SharedPreferences para web
+├── platform_helper.dart          # Verificación de plataforma (web vs mobile/desktop)
+├── migrations/                    # Carpeta específica para migraciones
+│   ├── migration.dart            # Clase base/interface para migraciones
+│   ├── migration_registry.dart   # Registro centralizado de todas las migraciones
+│   ├── migration_1_initial.dart  # Schema inicial (versión 1)
+│   ├── migration_2_add_created_at.dart  # Migración versión 2 (ejemplo)
+│   └── migration_X_xxx.dart      # Futuras migraciones
+└── logger.dart
+```
+
+### Responsabilidades por Archivo
+
+- **`database_io.dart`**: Controla versión actual y ejecuta migraciones automáticamente para SQLite (mobile/desktop)
+- **`database_web.dart`**: Inicializa SharedPreferences para web (no usa migraciones)
+- **`platform_helper.dart`**: Centraliza verificaciones de plataforma
+- **`migrations/migration.dart`**: Define el contrato/base para todas las migraciones
+- **`migrations/migration_registry.dart`**: Registra y organiza todas las migraciones disponibles
+- **`migrations/migration_X_xxx.dart`**: Implementación específica de cada migración
+
+## Implementación Detallada
+
+### 1. Clase Base: `migrations/migration.dart`
+
+```dart
+import 'package:sqflite/sqflite.dart';
+import '../logger.dart';
+
+/// Clase base abstracta para todas las migraciones de base de datos.
+///
+/// Cada migración debe extender esta clase e implementar los métodos requeridos.
+abstract class Migration {
+  /// Versión de la base de datos después de aplicar esta migración.
+  int get version;
+  
+  /// Descripción breve de lo que hace esta migración.
+  String get description;
+  
+  /// Aplica la migración a la base de datos.
+  ///
+  /// Este método debe contener toda la lógica para modificar el schema o datos.
+  Future<void> up(Database db);
+  
+  /// Crea el schema inicial para esta versión.
+  ///
+  /// Se usa cuando la BD se crea por primera vez desde cero.
+  /// Debe crear todas las tablas con la estructura de esta versión.
+  Future<void> createSchema(Database db);
+}
+```
+
+### 2. Registro de Migraciones: `migrations/migration_registry.dart`
+
+```dart
+import 'migration.dart';
+import 'migration_1_initial.dart';
+// Importar otras migraciones según se vayan agregando
+// import 'migration_2_add_created_at.dart';
+
+/// Registro centralizado de todas las migraciones disponibles.
+///
+/// Este registro permite a `DatabaseIO` descubrir y ejecutar
+/// migraciones automáticamente sin necesidad de conocerlas explícitamente.
+class MigrationRegistry {
+  /// Lista de todas las migraciones disponibles, ordenadas por versión.
+  ///
+  /// **IMPORTANTE**: Las migraciones deben estar ordenadas secuencialmente (1, 2, 3...)
+  /// y deben agregarse aquí cuando se crean nuevas migraciones.
+  static final List<Migration> _migrations = [
+    Migration1Initial(),
+    // Agregar nuevas migraciones aquí:
+    // Migration2AddCreatedAt(),
+    // Migration3Xxx(),
+  ];
+  
+  /// Obtiene todas las migraciones disponibles, ordenadas por versión.
+  static List<Migration> getAllMigrations() {
+    return List.from(_migrations)..sort((a, b) => a.version.compareTo(b.version));
+  }
+  
+  /// Obtiene las migraciones que deben ejecutarse para pasar de [fromVersion] a [toVersion].
+  ///
+  /// Retorna todas las migraciones cuya versión está en el rango (fromVersion < version <= toVersion).
+  static List<Migration> getMigrationsForRange(int fromVersion, int toVersion) {
+    return _migrations
+        .where((m) => m.version > fromVersion && m.version <= toVersion)
+        .toList()
+      ..sort((a, b) => a.version.compareTo(b.version));
+  }
+  
+  /// Obtiene la migración más reciente (mayor versión).
+  ///
+  /// Se usa para crear el schema inicial cuando la BD se crea por primera vez.
+  static Migration? getLatestMigration() {
+    if (_migrations.isEmpty) return null;
+    return _migrations.reduce((a, b) => a.version > b.version ? a : b);
+  }
+  
+  /// Obtiene la versión más reciente disponible.
+  static int getLatestVersion() {
+    final latest = getLatestMigration();
+    return latest?.version ?? 1;
+  }
+}
+```
+
+### 3. Implementación de Migración Individual: `migrations/migration_2_add_created_at.dart` (Ejemplo)
+
+```dart
+import 'package:sqflite/sqflite.dart';
+import '../logger.dart';
+import 'migration.dart';
+
+/// Migración a versión 2: Agregar columna createdAt a tabla tasks.
+class Migration2AddCreatedAt extends Migration {
+  @override
+  int get version => 2;
+  
+  @override
+  String get description => 'Agregar columna createdAt a tabla tasks';
+  
+  @override
+  Future<void> up(Database db) async {
+    try {
+      // Verificar si la columna ya existe (por si acaso)
+      final columns = await db.rawQuery('PRAGMA table_info(tasks)');
+      final hasCreatedAt = columns.any((col) => col['name'] == 'createdAt');
+      
+      if (!hasCreatedAt) {
+        // Agregar columna createdAt
+        await db.execute(
+          'ALTER TABLE tasks ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0',
+        );
+        
+        // Actualizar registros existentes con timestamp actual
+        final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+        await db.update(
+          'tasks',
+          {'createdAt': now},
+          where: 'createdAt = 0 OR createdAt IS NULL',
+        );
+        
+        AppLogger.info('Migración a versión 2 completada: columna createdAt agregada');
+      } else {
+        AppLogger.info('Columna createdAt ya existe, saltando migración');
+      }
+    } catch (e) {
+      AppLogger.error('Error en migración a versión 2', e);
+      rethrow;
+    }
+  }
+  
+  @override
+  Future<void> createSchema(Database db) async {
+    // Esta migración no crea schema inicial completo,
+    // solo agrega una columna. El schema inicial lo crea Migration1Initial.
+    // Si esta fuera la versión inicial, aquí se crearía el schema completo.
+    throw UnimplementedError(
+      'Esta migración no crea schema inicial. Usar Migration1Initial para crear schema base.',
+    );
+  }
+}
+```
+
+### 4. Migración Inicial: `migrations/migration_1_initial.dart`
+
+```dart
+import 'package:sqflite/sqflite.dart';
+import '../logger.dart';
+import 'migration.dart';
+
+/// Migración versión 1: Schema inicial de la base de datos.
+///
+/// Esta es la migración base que crea todas las tablas iniciales.
+class Migration1Initial extends Migration {
+  @override
+  int get version => 1;
+  
+  @override
+  String get description => 'Schema inicial de la base de datos';
+  
+  @override
+  Future<void> up(Database db) async {
+    // Esta migración solo se ejecuta si la BD se crea desde cero
+    // La lógica está en createSchema()
+    await createSchema(db);
+  }
+  
+  @override
+  Future<void> createSchema(Database db) async {
+    AppLogger.info('Creando schema inicial de base de datos (versión $version)...');
+    
+    await db.execute('''
+      CREATE TABLE tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        completed INTEGER NOT NULL
+      )
+    ''');
+    
+    AppLogger.info('Schema inicial creado exitosamente');
+  }
+}
+```
+
+### 5. DatabaseIO: `database_io.dart`
+
+```dart
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+import 'logger.dart';
+import 'migrations/migration_registry.dart';
+import 'platform_helper.dart';
+
+/// Utilidad para manejo de conexión a base de datos SQLite en mobile/desktop.
+/// Solo para plataformas IO (NO web). Web usa DatabaseWeb.
+class DatabaseIO {
+  static Database? _database;
+  static bool _initialized = false;
+  
+  /// Versión actual de la BD (obtenida de MigrationRegistry).
+  static int get _databaseVersion => MigrationRegistry.getLatestVersion();
+
+  /// Inicializa la BD y ejecuta migraciones.
+  /// Debe llamarse durante la inicialización (ej: SplashScreen).
+  /// Solo funciona en mobile/desktop. En web retorna true sin hacer nada.
+  static Future<bool> initializeDatabase() async {
+    if (PlatformHelper.isWeb) {
+      AppLogger.info('Plataforma: Web - No se inicializa SQLite (usa DatabaseWeb)');
+      return true;
+    }
+
+    if (_initialized) {
+      AppLogger.info('Base de datos ya inicializada');
+      return true;
+    }
+
+    try {
+      AppLogger.info('Inicializando base de datos y ejecutando migraciones...');
+      
+      final dbPath = await getDatabasesPath();
+      final path = join(dbPath, 'tasks.db');
+
+      // Inicializar según plataforma (desktop FFI o móvil estándar)
+      if (PlatformHelper.isDesktop) {
+        sqfliteFfiInit();
+        databaseFactory = databaseFactoryFfi;
+        _database = await databaseFactory.openDatabase(
+          path,
+          options: OpenDatabaseOptions(
+            version: _databaseVersion,
+            onCreate: (db, version) async {
+              await _createSchema(db, version);
+            },
+            onUpgrade: (db, oldVersion, newVersion) async {
+              await _migrateDatabase(db, oldVersion, newVersion);
+            },
+          ),
+        );
+      } else if (PlatformHelper.isMobile) {
+        _database = await openDatabase(
+          path,
+          version: _databaseVersion,
+          onCreate: (db, version) async {
+            await _createSchema(db, version);
+          },
+          onUpgrade: (db, oldVersion, newVersion) async {
+            await _migrateDatabase(db, oldVersion, newVersion);
+          },
+        );
+      }
+
+      AppLogger.info('Base de datos inicializada: [versión $_databaseVersion]');
+      _initialized = true;
+      return true;
+    } catch (e) {
+      AppLogger.error('Error al inicializar base de datos', e);
+      return false;
+    }
+  }
+
+  /// Obtiene la instancia de la BD (singleton).
+  /// Lanza excepción si no está inicializada o si es web.
+  static Future<Database> getDatabase() async {
+    if (PlatformHelper.isWeb) {
+      throw UnsupportedError('DatabaseIO no debe usarse en web. Usa DatabaseWeb.');
+    }
+    if (!_initialized || _database == null) {
+      throw StateError('BD no inicializada. Llama a DatabaseIO.initializeDatabase() primero.');
+    }
+    return _database!;
+  }
+
+  /// Crea el schema inicial de la base de datos.
+  ///
+  /// Este método se ejecuta solo cuando la BD se crea por primera vez.
+  /// Usa la última migración para crear el schema completo más reciente.
+  static Future<void> _createSchema(Database db, int version) async {
+    AppLogger.info('Creando schema de base de datos (versión $version)...');
+    
+    final latestMigration = MigrationRegistry.getLatestMigration();
+    if (latestMigration != null) {
+      // Obtener todas las migraciones y ejecutar sus createSchema
+      // en orden para construir el schema completo
+      final allMigrations = MigrationRegistry.getAllMigrations();
+      
+      for (final migration in allMigrations) {
+        await migration.createSchema(db);
+      }
+      
+      AppLogger.info('Schema creado exitosamente');
+    } else {
+      throw Exception('No hay migraciones registradas. Debe existir al menos Migration1Initial.');
+    }
+  }
+
+  /// Migra la base de datos desde una versión anterior a la actual.
+  ///
+  /// Este método se ejecuta automáticamente cuando existe una BD con versión anterior.
+  /// [oldVersion] - Versión actual de la BD existente
+  /// [newVersion] - Versión objetivo a la que migrar
+  static Future<void> _migrateDatabase(Database db, int oldVersion, int newVersion) async {
+    AppLogger.info('Migrando base de datos de versión $oldVersion a $newVersion...');
+
+    // Obtener migraciones necesarias para el rango de versiones
+    final migrations = MigrationRegistry.getMigrationsForRange(oldVersion, newVersion);
+    
+    if (migrations.isEmpty) {
+      AppLogger.info('No hay migraciones para aplicar');
+      return;
+    }
+
+    // Ejecutar migraciones en orden
+    for (final migration in migrations) {
+      AppLogger.info('Aplicando migración versión ${migration.version}: ${migration.description}');
+      try {
+        await migration.up(db);
+        AppLogger.info('Migración versión ${migration.version} completada exitosamente');
+      } catch (e) {
+        AppLogger.error('Error al aplicar migración versión ${migration.version}', e);
+        rethrow;
+      }
+    }
+
+    AppLogger.info('Migración completada exitosamente (versión $oldVersion → $newVersion)');
+  }
+
+  /// Ejecuta una operación en la base de datos.
+  ///
+  /// Maneja automáticamente la obtención de conexión y el manejo básico de errores.
+  /// NO cierra la conexión (se mantiene singleton).
+  static Future<T> withDatabase<T>(
+    Future<T> Function(Database db) operation,
+  ) async {
+    try {
+      final db = await getDatabase();
+      return await operation(db);
+    } catch (e) {
+      AppLogger.error('Error en operación de base de datos', e);
+      rethrow;
+    }
+  }
+
+  /// Cierra la conexión a la base de datos.
+  ///
+  /// Solo usar explícitamente cuando la app se cierra o en casos muy específicos.
+  static Future<void> closeDatabase() async {
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+      AppLogger.info('Base de datos cerrada');
+    }
+  }
+}
+```
+
+## Reglas de Implementación
+
+### 1. Crear Nueva Migración
+
+**Pasos para agregar una nueva migración**:
+
+1. **Crear archivo**: `lib/utils/migrations/migration_X_xxx.dart` donde:
+   - `X` es el número de versión
+   - `xxx` es una descripción breve en snake_case (ej: `add_created_at`, `add_users_table`)
+
+2. **Implementar clase**: Extender `Migration` e implementar:
+   - `version`: Número de versión (debe ser único y secuencial)
+   - `description`: Descripción clara de lo que hace la migración
+   - `up()`: Lógica para aplicar la migración
+   - `createSchema()`: Lógica para crear schema (solo si es versión inicial o necesita crear tablas nuevas)
+
+3. **Registrar en MigrationRegistry**: Agregar la nueva migración a la lista `_migrations` en `migration_registry.dart`
+
+4. **Actualizar schema inicial**: Si la migración agrega columnas/tablas, asegurarse de que el `createSchema()` de `Migration1Initial` o la migración correspondiente incluya esos cambios
+
+**Ejemplo**: Crear migración versión 2 para agregar `createdAt`
+
+```dart
+// lib/utils/migrations/migration_2_add_created_at.dart
+import 'package:sqflite/sqflite.dart';
+import '../logger.dart';
+import 'migration.dart';
+
+class Migration2AddCreatedAt extends Migration {
+  @override
+  int get version => 2;
+  
+  @override
+  String get description => 'Agregar columna createdAt a tabla tasks';
+  
+  @override
+  Future<void> up(Database db) async {
+    // Lógica de migración
+  }
+  
+  @override
+  Future<void> createSchema(Database db) async {
+    // Solo si crea tablas nuevas, si no, throw UnimplementedError
+  }
+}
+
+// Luego registrar en migration_registry.dart:
+// static final List<Migration> _migrations = [
+//   Migration1Initial(),
+//   Migration2AddCreatedAt(),  // <-- Agregar aquí
+// ];
+```
+
+### 2. Actualizar Schema Inicial
+
+**Cuando agregar a `createSchema()`**:
+- Si la migración agrega una **nueva tabla**: El `createSchema()` de `Migration1Initial` o la migración correspondiente debe crearla
+- Si la migración solo **modifica tablas existentes** (agregar columnas): No es necesario actualizar `createSchema()`, solo `up()`
+
+**Importante**: El schema inicial debe reflejar la estructura MÁS RECIENTE cuando se crea la BD desde cero.
+
+### 3. Manejo de Errores en Migraciones
+
+**Estructura estándar**:
+```dart
+@override
+Future<void> up(Database db) async {
+  try {
+    // 1. Verificar estado actual (si aplica)
+    // 2. Ejecutar cambios de schema (ALTER TABLE, CREATE TABLE, etc.)
+    // 3. Migrar datos existentes si es necesario
+    // 4. Loggear resultado
+    
+    AppLogger.info('Migración a versión $version completada: $description');
+  } catch (e) {
+    AppLogger.error('Error en migración a versión $version', e);
+    rethrow; // Propagar error para que sqflite lo maneje
+  }
+}
+```
+
+### 4. Verificaciones Idempotentes
+
+**Importante**: Las migraciones deben ser idempotentes (pueden ejecutarse múltiples veces sin efectos adversos):
+
+```dart
+// ✅ Bien: Verificar antes de aplicar cambios
+final columns = await db.rawQuery('PRAGMA table_info(tasks)');
+final hasColumn = columns.any((col) => col['name'] == 'createdAt');
+if (!hasColumn) {
+  await db.execute('ALTER TABLE tasks ADD COLUMN createdAt INTEGER');
+}
+
+// ❌ Evitar: Aplicar cambios sin verificar
+await db.execute('ALTER TABLE tasks ADD COLUMN createdAt INTEGER'); // Puede fallar si ya existe
+```
+
+## Migraciones Comunes - Plantillas
+
+### Agregar Columna
+
+```dart
+@override
+Future<void> up(Database db) async {
+  try {
+    // Verificar si la columna existe
+    final columns = await db.rawQuery('PRAGMA table_info(nombre_tabla)');
+    final exists = columns.any((col) => col['name'] == 'nombre_columna');
+    
+    if (!exists) {
+      await db.execute(
+        'ALTER TABLE nombre_tabla ADD COLUMN nombre_columna TIPO NOT NULL DEFAULT valor_default',
+      );
+      
+      // Actualizar registros existentes si es necesario
+      // await db.update('nombre_tabla', {'nombre_columna': valor}, where: 'condicion');
+      
+      AppLogger.info('Migración $version: columna nombre_columna agregada');
+    }
+  } catch (e) {
+    AppLogger.error('Error en migración $version', e);
+    rethrow;
+  }
+}
+```
+
+### Agregar Tabla
+
+```dart
+@override
+Future<void> up(Database db) async {
+  try {
+    // Verificar si la tabla existe (opcional, CREATE TABLE IF NOT EXISTS también funciona)
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='nombre_tabla'",
+    );
+    
+    if (tables.isEmpty) {
+      await db.execute('''
+        CREATE TABLE nombre_tabla (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          campo1 TEXT NOT NULL,
+          campo2 INTEGER NOT NULL
+        )
+      ''');
+      
+      AppLogger.info('Migración $version: tabla nombre_tabla creada');
+    }
+  } catch (e) {
+    AppLogger.error('Error en migración $version', e);
+    rethrow;
+  }
+}
+```
+
+### Agregar Índice
+
+```dart
+@override
+Future<void> up(Database db) async {
+  try {
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_nombre ON tabla(columna)');
+    AppLogger.info('Migración $version: índice idx_nombre creado');
+  } catch (e) {
+    AppLogger.error('Error en migración $version', e);
+    rethrow;
+  }
+}
+```
+
+## Ejemplo Completo: Migración de Versión 1 a 2
+
+**Contexto**: Agregar columna `createdAt` a tabla `tasks`
+
+**Paso 1**: Crear archivo `migration_2_add_created_at.dart`
+
+**Paso 2**: Implementar la migración (ver ejemplo en sección "Implementación de Migración Individual")
+
+**Paso 3**: Registrar en `migration_registry.dart`:
+```dart
+static final List<Migration> _migrations = [
+  Migration1Initial(),
+  Migration2AddCreatedAt(),  // <-- Nueva migración
+];
+```
+
+**Paso 4**: Actualizar `Migration1Initial.createSchema()` si es necesario (en este caso, NO es necesario porque `createdAt` se agrega después, el schema inicial no lo incluye)
+
+**Resultado**: Al abrir la BD, si la versión es 1, se ejecutará automáticamente `Migration2AddCreatedAt.up()` para agregar la columna.
+
+## Manejo de Plataformas
+
+### Desktop vs Móvil (SQLite)
+
+**Importante**: Las migraciones deben funcionar para ambas plataformas que usan SQLite. La estructura modular garantiza esto porque:
+
+- Las migraciones usan `Database` de sqflite (compatible con ambas plataformas)
+- `DatabaseIO` maneja la inicialización según plataforma (FFI para desktop, sqflite estándar para móvil)
+- Las migraciones no dependen de la plataforma, solo del `Database` proporcionado
+- La inicialización se realiza explícitamente durante el arranque de la app (ej: `SplashScreen`)
+
+### Web (SharedPreferences)
+
+**Importante**: Las migraciones **NO aplican para la plataforma Web** que usa SharedPreferences:
+
+- Web usa almacenamiento clave-valor, no SQLite
+- No hay schema que migrar en SharedPreferences
+- Cuando el modelo cambia, los servicios web deben actualizar la estructura de datos manualmente al guardar
+- La consistencia del modelo entre plataformas es responsabilidad del desarrollador
+- Ejemplo: Si se agrega campo `createdAt` al modelo, `task_service_web.dart` debe incluirlo al serializar/deserializar, pero no requiere migración automática
+
+**Directiva**: Al modificar el modelo de datos:
+1. Crear migración para SQLite (mobile/desktop) si es necesario
+2. Actualizar servicios web manualmente para incluir nuevos campos en serialización
+3. Verificar que ambas plataformas guardan y cargan los mismos campos
+
+## Checklist para Implementar Nueva Migración
+
+Antes de considerar una migración completa:
+
+- [ ] Archivo creado en `lib/utils/migrations/migration_X_xxx.dart`
+- [ ] Clase extiende `Migration` e implementa todos los métodos requeridos
+- [ ] Versión asignada es secuencial y única
+- [ ] Descripción clara del cambio
+- [ ] Migración registrada en `MigrationRegistry._migrations`
+- [ ] `up()` implementado con try-catch y logging
+- [ ] `createSchema()` implementado si crea tablas nuevas, o `UnimplementedError` si solo modifica
+- [ ] Verificaciones idempotentes (verificar antes de aplicar cambios)
+- [ ] Datos existentes migrados correctamente (si aplica)
+- [ ] Código documentado con comentarios claros
+- [ ] Probado que funciona en desktop Y móvil
+
+## Principios de Simplicidad
+
+- **Separación clara**: Cada migración en su propio archivo, fácil de encontrar y mantener
+- **Registro centralizado**: Un solo lugar para ver todas las migraciones
+- **Ejecución automática**: No requiere intervención manual, `DatabaseIO` lo maneja durante la inicialización
+- **Migraciones lineales**: Migrar paso a paso (1→2→3), no saltos directos
+- **Idempotentes**: Verificar estado antes de aplicar cambios
+- **Simples**: No sobre-complicar, mantener migraciones directas y claras
+
+## Notas Técnicas
+
+- **sqflite versioning**: sqflite maneja automáticamente las versiones en el archivo de BD
+- **Ejecución automática**: `onUpgrade` se ejecuta automáticamente al abrir la BD si `oldVersion < newVersion`
+- **Una sola ejecución**: Cada migración se ejecuta una sola vez por BD (sqflite lo garantiza)
+- **Datos tolerables**: Si una migración falla, el usuario puede eliminar la BD y recrearla
+- **Sin rollback**: No se implementa rollback de migraciones (las migraciones solo avanzan)
+- **Versión automática**: La versión se obtiene de `MigrationRegistry`, no se define manualmente en `DatabaseIO`
+
+## Ventajas de Esta Estructura
+
+1. **Organización clara**: Cada migración tiene su archivo, fácil de encontrar
+2. **Escalable**: Fácil agregar nuevas migraciones sin modificar código existente
+3. **Mantenible**: Cambios en una migración no afectan otras
+4. **Testeable**: Cada migración puede probarse independientemente
+5. **Automático**: `DatabaseIO` descubre y ejecuta migraciones durante la inicialización sin configuración manual
+6. **Centralizado**: Un solo lugar (`MigrationRegistry`) para ver todas las migraciones
+
+## Ejemplo de Evolución de Versiones
+
+**Versión 1** (`migration_1_initial.dart`):
+- Tabla `tasks` con: `id`, `title`, `description`, `completed`
+
+**Versión 2** (`migration_2_add_created_at.dart`):
+- Agregar columna `createdAt` a tabla `tasks`
+
+**Versión 3** (`migration_3_add_users_table.dart`, futuro ejemplo):
+- Agregar tabla `users` con: `id`, `email`, `password`
+
+Cada versión tiene su archivo de migración específico y el `MigrationRegistry` las ejecuta en orden automáticamente.

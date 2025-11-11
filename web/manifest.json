@@ -1,6 +1,8 @@
 {
+
     "name": "task_manager_flutter_complete",
     "short_name": "task_manager_flutter_complete",
+
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
