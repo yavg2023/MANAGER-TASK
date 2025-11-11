@@ -1,4 +1,22 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'
+    show
+        AppBar,
+        BuildContext,
+        Center,
+        CircularProgressIndicator,
+        EdgeInsets,
+        FloatingActionButton,
+        Icon,
+        Icons,
+        MaterialPageRoute,
+        Navigator,
+        Padding,
+        Scaffold,
+        State,
+        StatefulWidget,
+        Text,
+        Theme,
+        Widget;
 import '../services/api.dart';
 import '../widgets/task_list.dart';
 import 'task_form.dart';
@@ -19,7 +37,9 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   Future<void> _loadTasks() async {
-    setState(() { loading = true; });
+    setState(() {
+      loading = true;
+    });
     final token = await Api.getStoredToken();
     if (token == null) {
       Navigator.pushReplacementNamed(context, '/login');
@@ -39,7 +59,8 @@ class _TasksPageState extends State<TasksPage> {
     if (updated != null) {
       // update local list
       setState(() {
-        final idx = tasks.indexWhere((e) => e['id'].toString() == id.toString());
+        final idx =
+            tasks.indexWhere((e) => e['id'].toString() == id.toString());
         if (idx != -1) tasks[idx] = updated;
       });
     }
@@ -49,12 +70,15 @@ class _TasksPageState extends State<TasksPage> {
     final id = t['id'];
     final ok = await Api.deleteTask(id.toString());
     if (ok) {
-      setState(() { tasks.removeWhere((e) => e['id'].toString() == id.toString()); });
+      setState(() {
+        tasks.removeWhere((e) => e['id'].toString() == id.toString());
+      });
     }
   }
 
   void _openForm([Map? task]) async {
-    final res = await Navigator.push(context, MaterialPageRoute(builder: (_) => TaskFormPage(task: task)));
+    final res = await Navigator.push(
+        context, MaterialPageRoute(builder: (_) => TaskFormPage(task: task)));
     if (res == true) _loadTasks();
   }
 
@@ -68,11 +92,15 @@ class _TasksPageState extends State<TasksPage> {
         backgroundColor: Theme.of(context).colorScheme.secondary,
       ),
       body: loading
-        ? Center(child: CircularProgressIndicator())
-        : Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TaskList(tasks: tasks, onToggle: _toggleTask, onDelete: _deleteTask, onEdit: _openForm),
-          ),
+          ? Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TaskList(
+                  tasks: tasks,
+                  onToggle: _toggleTask,
+                  onDelete: _deleteTask,
+                  onEdit: _openForm),
+            ),
     );
   }
 }

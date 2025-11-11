@@ -10,9 +10,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+   
   cupertino_icons: ^1.0.2
 
   provider: ^6.0.5
+  http: ^1.2.1
+  uuid: ^4.2.1
   sqflite: ^2.2.8+4
   path: ^1.8.4
   sqflite_common_ffi: ^2.3.6
