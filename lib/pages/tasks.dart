@@ -78,7 +78,17 @@ class _TasksPageState extends State<TasksPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mis Tareas')),
+      appBar: AppBar(
+        title: const Text('Mis Tareas'),
+        actions: [
+          if (offline)
+            IconButton(
+              tooltip: 'Offline - Reintentar',
+              icon: const Icon(Icons.cloud_off, color: Colors.orangeAccent),
+              onPressed: () => _loadTasks(),
+            ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openForm(),
         backgroundColor: Theme.of(context).colorScheme.secondary,

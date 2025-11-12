@@ -68,7 +68,7 @@ class PageInit extends StatelessWidget {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/register');
+                      Navigator.pushNamed(context, '/register');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
@@ -96,6 +96,8 @@ class PageInit extends StatelessWidget {
                 ),
               ],
             ),
+
+            const SizedBox(height: 24),
 
             const SizedBox(height: 40),
             const Text(
