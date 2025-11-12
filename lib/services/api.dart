@@ -7,6 +7,8 @@ import 'package:uuid/uuid.dart';
 class Api {
   static const baseUrl = 'https://tu-api-aqui.com/api';
   static const cacheKey = 'cached_tasks_v1';
+  // Indica si la última llamada a la API falló (modo offline/cache)
+  static bool offline = false;
 
   static Future<void> _saveCache(List data) async {
     final prefs = await SharedPreferences.getInstance();
@@ -35,6 +37,7 @@ class Api {
         final token = data['token'];
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
+        offline = false;
         return data;
       }
     } catch (e) {
@@ -43,6 +46,7 @@ class Api {
       try {
         if (baseUrl.contains('tu-api-aqui.com')) {
           if (kDebugMode) {
+            offline = true;
             final prefs = await SharedPreferences.getInstance();
             await prefs.setString('token', 'dev-token');
             return {'token': 'dev-token'};
@@ -70,12 +74,15 @@ class Api {
           list = [];
         }
         await _saveCache(list);
+        offline = false;
         return list;
       }
     } catch (e) {
       debugPrint('fetchTasks error, returning cache: $e');
+      offline = true;
       return await _readCache();
     }
+    // If status code was not 200, try cache but consider offline state unknown -> leave offline as-is
     return await _readCache();
   }
 
@@ -89,6 +96,7 @@ class Api {
         final cache = await _readCache() ?? [];
         cache.insert(0, data);
         await _saveCache(cache);
+        offline = false;
         return data;
       }
     } catch (e) {
@@ -97,6 +105,7 @@ class Api {
       final pending = {...body, 'id': tempId, 'pending': true};
       cache.insert(0, pending);
       await _saveCache(cache);
+      offline = true;
       return pending;
     }
     return null;
@@ -114,6 +123,7 @@ class Api {
         if (idx != -1) {
           cache[idx] = data;
           await _saveCache(cache);
+          offline = false;
         }
         return data;
       }
@@ -123,6 +133,7 @@ class Api {
       if (idx != -1) {
         cache[idx] = {...cache[idx], ...body};
         await _saveCache(cache);
+        offline = true;
         return cache[idx];
       }
     }
@@ -138,12 +149,14 @@ class Api {
         final cache = await _readCache() ?? [];
         cache.removeWhere((e) => e['id'].toString() == id.toString());
         await _saveCache(cache);
+        offline = false;
         return true;
       }
     } catch (e) {
       final cache = await _readCache() ?? [];
       cache.removeWhere((e) => e['id'].toString() == id.toString());
       await _saveCache(cache);
+      offline = true;
       return true;
     }
     return false;

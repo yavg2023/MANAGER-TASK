@@ -13,6 +13,7 @@ class TasksPage extends StatefulWidget {
 class _TasksPageState extends State<TasksPage> {
   List tasks = [];
   bool loading = true;
+  bool offline = false;
 
   @override
   void initState() {
@@ -34,6 +35,7 @@ class _TasksPageState extends State<TasksPage> {
     setState(() {
       tasks = data ?? [];
       loading = false;
+      offline = Api.offline;
     });
   }
 
@@ -84,14 +86,35 @@ class _TasksPageState extends State<TasksPage> {
       ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: KanbanBoard(
-                tasks: tasks,
-                onMove: (task, column) async {
-                  await _moveTaskTo(task, column);
-                },
-              ),
+          : Column(
+              children: [
+                if (offline)
+                  MaterialBanner(
+                    content: const Text('Conexión al backend fallida — usando datos en caché'),
+                    backgroundColor: Colors.orange.shade100,
+                    actions: [
+                      TextButton(
+                        onPressed: () => _loadTasks(),
+                        child: const Text('Reintentar'),
+                      ),
+                      TextButton(
+                        onPressed: () => setState(() => offline = false),
+                        child: const Text('Cerrar'),
+                      ),
+                    ],
+                  ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: KanbanBoard(
+                      tasks: tasks,
+                      onMove: (task, column) async {
+                        await _moveTaskTo(task, column);
+                      },
+                    ),
+                  ),
+                ),
+              ],
             ),
     );
   }
