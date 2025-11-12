@@ -36,6 +36,14 @@ class Api {
       }
     } catch (e) {
       print('login error: $e');
+      // Si estamos en modo desarrollo (baseUrl por defecto), crear un token falso
+      try {
+        if (baseUrl.contains('tu-api-aqui.com')) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('token', 'dev-token');
+          return {'token': 'dev-token'};
+        }
+      } catch (_) {}
     }
     return null;
   }

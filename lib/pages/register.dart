@@ -1,3 +1,4 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -124,7 +125,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         // Mostrar mensaje de registro exitoso
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -132,9 +133,10 @@ class _RegisterPageState extends State<RegisterPage> {
                         );
 
                         // Esperar 2 segundos y redirigir al login
-                        Future.delayed(const Duration(seconds: 2), () {
-                          Navigator.pushReplacementNamed(context, '/login');
-                        });
+                        await Future.delayed(const Duration(seconds: 2));
+                        if (!mounted) return;
+                        // ignore: use_build_context_synchronously
+                        Navigator.pushReplacementNamed(context, '/login');
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -149,6 +151,15 @@ class _RegisterPageState extends State<RegisterPage> {
                       style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
                   ),
+                ),
+                const SizedBox(height: 12),
+                // Botón para volver a la página de inicio
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/pageInit');
+                  },
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Volver al inicio'),
                 ),
               ],
             ),

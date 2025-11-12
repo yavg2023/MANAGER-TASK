@@ -1,29 +1,13 @@
-import 'package:flutter/material.dart'
-    show
-        AppBar,
-        BuildContext,
-        Center,
-        CircularProgressIndicator,
-        EdgeInsets,
-        FloatingActionButton,
-        Icon,
-        Icons,
-        MaterialPageRoute,
-        Navigator,
-        Padding,
-        Scaffold,
-        State,
-        StatefulWidget,
-        Text,
-        Theme,
-        Widget;
+import 'package:flutter/material.dart';
 import '../services/api.dart';
 import '../widgets/task_list.dart';
 import 'task_form.dart';
 
 class TasksPage extends StatefulWidget {
+  const TasksPage({Key? key}) : super(key: key);
+
   @override
-  _TasksPageState createState() => _TasksPageState();
+  State<TasksPage> createState() => _TasksPageState();
 }
 
 class _TasksPageState extends State<TasksPage> {
@@ -42,6 +26,7 @@ class _TasksPageState extends State<TasksPage> {
     });
     final token = await Api.getStoredToken();
     if (token == null) {
+      if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/login');
       return;
     }

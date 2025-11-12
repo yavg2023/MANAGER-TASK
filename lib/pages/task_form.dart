@@ -1,12 +1,13 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import '../services/api.dart';
 
 class TaskFormPage extends StatefulWidget {
   final Map? task;
-  TaskFormPage({this.task});
+  const TaskFormPage({Key? key, this.task}) : super(key: key);
 
   @override
-  _TaskFormPageState createState() => _TaskFormPageState();
+  State<TaskFormPage> createState() => _TaskFormPageState();
 }
 
 class _TaskFormPageState extends State<TaskFormPage> {
@@ -24,7 +25,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
   }
 
   Future<void> _save() async {
-    setState(() { _loading = true; });
+    setState(() {
+      _loading = true;
+    });
     final body = {'title': _titleCtrl.text.trim(), 'description': _descCtrl.text.trim()};
     bool ok = false;
     if (widget.task == null) {
@@ -35,9 +38,15 @@ class _TaskFormPageState extends State<TaskFormPage> {
       final updated = await Api.updateTask(id, {...body, 'done': widget.task!['done'] == true});
       ok = updated != null;
     }
-    setState(() { _loading = false; });
-    if (ok) Navigator.pop(context, true);
-    else ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error guardando tarea')));
+    setState(() {
+      _loading = false;
+    });
+    if (!mounted) return;
+    if (ok) {
+      Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error guardando tarea')));
+    }
   }
 
   @override

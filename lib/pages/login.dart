@@ -1,4 +1,6 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
+import '../services/api.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -96,10 +98,20 @@ class _LoginPageState extends State<LoginPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        // Aquí podrías verificar el usuario simulado y redirigir según el rol
-                        Navigator.pushNamed(context, '/dashboard');
+                        final res = await Api.login(_emailController.text, _passwordController.text);
+                        if (!mounted) return;
+                        // El check de `mounted` está justo arriba; silenciamos el lint aquí
+                        // ignore: use_build_context_synchronously
+                        if (res != null && res['token'] != null) {
+                          Navigator.pushReplacementNamed(context, '/dashboard');
+                        } else {
+                          // ignore: use_build_context_synchronously
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Credenciales incorrectas')),
+                          );
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -143,6 +155,15 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 8),
+                // Botón para volver a la página de inicio
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/pageInit');
+                  },
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Volver al inicio'),
                 ),
               ],
             ),
