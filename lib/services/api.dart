@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -19,7 +20,9 @@ class Api {
     try {
       final decoded = jsonDecode(s);
       if (decoded is List) return decoded;
-    } catch (e) {}
+    } catch (e) {
+      debugPrint('cache decode error: $e');
+    }
     return null;
   }
 
@@ -35,15 +38,19 @@ class Api {
         return data;
       }
     } catch (e) {
-      print('login error: $e');
+      debugPrint('login error: $e');
       // Si estamos en modo desarrollo (baseUrl por defecto), crear un token falso
       try {
         if (baseUrl.contains('tu-api-aqui.com')) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('token', 'dev-token');
-          return {'token': 'dev-token'};
+          if (kDebugMode) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('token', 'dev-token');
+            return {'token': 'dev-token'};
+          }
         }
-      } catch (_) {}
+      } catch (err) {
+        debugPrint('dev-token fallback failed: $err');
+      }
     }
     return null;
   }
@@ -55,14 +62,18 @@ class Api {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         List list;
-        if (data is List) list = data;
-        else if (data is Map && data['tasks'] != null) list = List.from(data['tasks']);
-        else list = [];
+        if (data is List) {
+          list = data;
+        } else if (data is Map && data['tasks'] != null) {
+          list = List.from(data['tasks']);
+        } else {
+          list = [];
+        }
         await _saveCache(list);
         return list;
       }
     } catch (e) {
-      print('fetchTasks error, returning cache: $e');
+      debugPrint('fetchTasks error, returning cache: $e');
       return await _readCache();
     }
     return await _readCache();
@@ -82,7 +93,7 @@ class Api {
       }
     } catch (e) {
       final cache = await _readCache() ?? [];
-      final tempId = Uuid().v4();
+      final tempId = const Uuid().v4();
       final pending = {...body, 'id': tempId, 'pending': true};
       cache.insert(0, pending);
       await _saveCache(cache);

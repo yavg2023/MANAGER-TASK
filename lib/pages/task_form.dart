@@ -4,7 +4,7 @@ import '../services/api.dart';
 
 class TaskFormPage extends StatefulWidget {
   final Map? task;
-  const TaskFormPage({Key? key, this.task}) : super(key: key);
+  const TaskFormPage({super.key, this.task});
 
   @override
   State<TaskFormPage> createState() => _TaskFormPageState();
@@ -58,16 +58,16 @@ class _TaskFormPageState extends State<TaskFormPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            TextField(controller: _titleCtrl, decoration: InputDecoration(labelText: 'Título')),
-            SizedBox(height: 12),
-            TextField(controller: _descCtrl, decoration: InputDecoration(labelText: 'Descripción')),
-            SizedBox(height: 20),
+            TextField(controller: _titleCtrl, decoration: const InputDecoration(labelText: 'Título')),
+            const SizedBox(height: 12),
+            TextField(controller: _descCtrl, decoration: const InputDecoration(labelText: 'Descripción')),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _loading ? null : _save,
-                child: _loading ? CircularProgressIndicator(color: Colors.white) : Text(isEdit ? 'Actualizar' : 'Crear'),
                 style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.secondary),
+                child: _loading ? const CircularProgressIndicator(color: Colors.white) : Text(isEdit ? 'Actualizar' : 'Crear'),
               ),
             )
           ],

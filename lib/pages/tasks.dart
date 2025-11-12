@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/api.dart';
-import '../widgets/task_list.dart';
+import '../widgets/kanban_board.dart';
 import 'task_form.dart';
 
 class TasksPage extends StatefulWidget {
-  const TasksPage({Key? key}) : super(key: key);
+  const TasksPage({super.key});
 
   @override
   State<TasksPage> createState() => _TasksPageState();
@@ -37,29 +37,8 @@ class _TasksPageState extends State<TasksPage> {
     });
   }
 
-  Future<void> _toggleTask(Map t) async {
-    final id = t['id'];
-    final newDone = !(t['done'] == true || t['completed'] == true);
-    final updated = await Api.updateTask(id.toString(), {'done': newDone});
-    if (updated != null) {
-      // update local list
-      setState(() {
-        final idx =
-            tasks.indexWhere((e) => e['id'].toString() == id.toString());
-        if (idx != -1) tasks[idx] = updated;
-      });
-    }
-  }
-
-  Future<void> _deleteTask(Map t) async {
-    final id = t['id'];
-    final ok = await Api.deleteTask(id.toString());
-    if (ok) {
-      setState(() {
-        tasks.removeWhere((e) => e['id'].toString() == id.toString());
-      });
-    }
-  }
+  // Note: Toggle and delete operations are handled via Kanban actions or
+  // through the task form; keep server-side update helper `_moveTaskTo`.
 
   void _openForm([Map? task]) async {
     final res = await Navigator.push(
@@ -67,24 +46,52 @@ class _TasksPageState extends State<TasksPage> {
     if (res == true) _loadTasks();
   }
 
+  Future<void> _moveTaskTo(Map t, String column) async {
+    final id = t['id'];
+    Map<String, dynamic> body = {};
+    if (column == 'done') {
+      body = {'done': true, 'in_progress': false};
+    } else if (column == 'in_progress') {
+      body = {'in_progress': true, 'done': false};
+    } else if (column == 'todo') {
+      body = {'in_progress': false, 'done': false};
+    }
+    final updated = await Api.updateTask(id.toString(), body);
+    if (updated != null) {
+      setState(() {
+        final idx = tasks.indexWhere((e) => e['id'].toString() == id.toString());
+        if (idx != -1) tasks[idx] = updated;
+      });
+    } else {
+      // If server update failed, attempt local update for responsiveness
+      setState(() {
+        final idx = tasks.indexWhere((e) => e['id'].toString() == id.toString());
+        if (idx != -1) {
+          tasks[idx] = {...tasks[idx], ...body};
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Mis Tareas')),
+      appBar: AppBar(title: const Text('Mis Tareas')),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openForm(),
-        child: Icon(Icons.add),
         backgroundColor: Theme.of(context).colorScheme.secondary,
+        child: const Icon(Icons.add),
       ),
       body: loading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.all(8.0),
-              child: TaskList(
-                  tasks: tasks,
-                  onToggle: _toggleTask,
-                  onDelete: _deleteTask,
-                  onEdit: _openForm),
+              child: KanbanBoard(
+                tasks: tasks,
+                onMove: (task, column) async {
+                  await _moveTaskTo(task, column);
+                },
+              ),
             ),
     );
   }

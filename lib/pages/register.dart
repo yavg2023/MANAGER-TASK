@@ -135,7 +135,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         // Esperar 2 segundos y redirigir al login
                         await Future.delayed(const Duration(seconds: 2));
                         if (!mounted) return;
-                        // ignore: use_build_context_synchronously
                         Navigator.pushReplacementNamed(context, '/login');
                       }
                     },

@@ -5,14 +5,16 @@ import 'pages/dashboard.dart';
 import 'pages/tasks.dart';
 import 'pages/task_form.dart';
 import 'services/auth_service.dart';
-import 'pages/pageInit.dart';
+import 'pages/page_init.dart';
 import 'pages/register.dart';
 
 void main() {
-  runApp(TaskManagerApp());
+  runApp(const TaskManagerApp());
 }
 
 class TaskManagerApp extends StatelessWidget {
+  const TaskManagerApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<AuthService>(
@@ -20,11 +22,11 @@ class TaskManagerApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Task Manager',
         theme: ThemeData(
-          primaryColor: Color(0xFF2563EB),
+          primaryColor: const Color(0xFF2563EB),
           colorScheme:
-              ColorScheme.fromSwatch().copyWith(secondary: Color(0xFF10B981)),
-          scaffoldBackgroundColor: Color(0xFFF9FAFB),
-          appBarTheme: AppBarTheme(
+              ColorScheme.fromSwatch().copyWith(secondary: const Color(0xFF10B981)),
+          scaffoldBackgroundColor: const Color(0xFFF9FAFB),
+          appBarTheme: const AppBarTheme(
             backgroundColor: Color(0xFF2563EB),
             foregroundColor: Colors.white,
           ),
@@ -33,9 +35,9 @@ class TaskManagerApp extends StatelessWidget {
         routes: {
           '/pageInit': (context) => const PageInit(),
           '/login': (context) => const LoginPage(),
-          '/dashboard': (context) => DashboardPage(),
-          '/tasks': (context) => TasksPage(),
-          '/task_form': (context) => TaskFormPage(),
+          '/dashboard': (context) => const DashboardPage(),
+          '/tasks': (context) => const TasksPage(),
+          '/task_form': (context) => const TaskFormPage(),
           '/register': (context) => const RegisterPage(),
         },
       ),

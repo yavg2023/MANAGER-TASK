@@ -102,12 +102,10 @@ class _LoginPageState extends State<LoginPage> {
                       if (_formKey.currentState!.validate()) {
                         final res = await Api.login(_emailController.text, _passwordController.text);
                         if (!mounted) return;
-                        // El check de `mounted` está justo arriba; silenciamos el lint aquí
-                        // ignore: use_build_context_synchronously
+                        // El check de `mounted` está justo arriba
                         if (res != null && res['token'] != null) {
                           Navigator.pushReplacementNamed(context, '/dashboard');
                         } else {
-                          // ignore: use_build_context_synchronously
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Credenciales incorrectas')),
                           );
