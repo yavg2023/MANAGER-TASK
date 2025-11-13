@@ -10,41 +10,51 @@ class PageInit extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 2,
-        leading: const Icon(Icons.menu, color: Colors.black87),
-        title: const Text(
-          '',
-          style: TextStyle(color: Colors.black87),
+        automaticallyImplyLeading: false, // 👈 elimina el ícono de menú
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            const SizedBox(width: 8),
+            const Text(
+              'TASK MANAGER',
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+          ],
         ),
         actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/register');
-            },
-            child: const Text(
-              'Registrarme',
-              style:
-                  TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
-            ),
-          ),
           TextButton(
             onPressed: () {
               Navigator.pushNamed(context, '/login');
             },
             child: const Text(
               'Iniciar sesión',
-              style:
-                  TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.black87, fontWeight: FontWeight.bold),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/register');
+            },
+            child: const Text(
+              'Registrarse',
+              style: TextStyle(
+                  color: Colors.black87, fontWeight: FontWeight.bold),
             ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+      body: const SingleChildScrollView(
+        padding: EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 20),
-            const Text(
+            SizedBox(height: 20),
+            Text(
               'Bienvenido a la Aplicación de Gestión de Tareas',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -53,17 +63,16 @@ class PageInit extends StatelessWidget {
                 color: Colors.black87,
               ),
             ),
-            const SizedBox(height: 10),
-            const Text(
+            SizedBox(height: 10),
+            Text(
               'Esta es tu aplicación sencilla para gestionar tareas diarias.\n'
-              'Para comenzar, por favor regístrate en nuestra plataforma o inicia sesión si ya tienes una cuenta, '
-              'y empieza a gestionar tus tareas.',
+                  'Para comenzar, por favor regístrate en nuestra plataforma o inicia sesión si ya tienes una cuenta, '
+                  'y empieza a gestionar tus tareas.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 15, color: Colors.black54),
             ),
-            const SizedBox(height: 20),
-            // Sección añadida: Qué Hacemos (texto proporcionado por el usuario)
-            const Text(
+            SizedBox(height: 20),
+            Text(
               'Qué Hacemos',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -72,65 +81,26 @@ class PageInit extends StatelessWidget {
                 color: Colors.black87,
               ),
             ),
-            const SizedBox(height: 10),
-            const Text(
+            SizedBox(height: 10),
+            Text(
               'En nuestra plataforma, nos dedicamos a facilitar la vida de nuestros usuarios al proporcionar una '
-              'herramienta robusta y visualmente intuitiva para la gestión de tareas. Ya seas un administrador que '
-              'necesita organizar múltiples proyectos, o un usuario regular que busca mantenerse al tanto de sus tareas '
-              'diarias, nuestra plataforma está diseñada para adaptarse a tus necesidades.',
+                  'herramienta robusta y visualmente intuitiva para la gestión de tareas. Ya seas un administrador que '
+                  'necesita organizar múltiples proyectos, o un usuario regular que busca mantenerse al tanto de sus tareas '
+                  'diarias, nuestra plataforma está diseñada para adaptarse a tus necesidades.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 15, color: Colors.black54),
             ),
-            const SizedBox(height: 20),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 10,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                      Navigator.pushNamed(context, '/register');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: const Text('Regístrate Ahora',
-                      style: TextStyle(color: Colors.white)),
-                ),
-                OutlinedButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/login');
-                  },
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 14),
-                    side: const BorderSide(color: Color(0xFF2563EB)),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: const Text('Inicia Sesión',
-                      style: TextStyle(color: Color(0xFF2563EB))),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-
-            const SizedBox(height: 40),
-            const Text(
+            SizedBox(height: 24),
+            SizedBox(height: 40),
+            Text(
               'Servicios Destacados',
               style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87),
             ),
-            const SizedBox(height: 20),
-
-            // Sección de servicios destacados
-            const Wrap(
+            SizedBox(height: 20),
+            Wrap(
               alignment: WrapAlignment.center,
               spacing: 20,
               runSpacing: 20,
@@ -139,44 +109,41 @@ class PageInit extends StatelessWidget {
                   icon: Icons.check_circle_outline,
                   title: 'Gestión Eficiente',
                   description:
-                      'Administra tus tareas con facilidad y organiza tu trabajo de manera intuitiva con nuestro tablero estilo Kanban.',
+                  'Administra tus tareas con facilidad y organiza tu trabajo de manera intuitiva con nuestro tablero estilo Kanban.',
                 ),
                 _ServiceCard(
                   icon: Icons.star_border,
                   title: 'Usabilidad Amigable',
                   description:
-                      'Disfruta de una experiencia de usuario fluida y amigable, diseñada para mejorar tu productividad.',
+                  'Disfruta de una experiencia de usuario fluida y amigable, diseñada para mejorar tu productividad.',
                 ),
               ],
             ),
-
-            const SizedBox(height: 40),
-            const Text(
+            SizedBox(height: 40),
+            Text(
               'Testimonios',
               style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87),
             ),
-            const SizedBox(height: 20),
-
-            // Testimonios
-            const _TestimonialCard(
+            SizedBox(height: 20),
+            _TestimonialCard(
               text:
-                  '“Esta aplicación ha transformado la forma en que gestiono mis tareas. ¡Es muy fácil de usar y me ayuda a mantenerme organizada!”',
+              '“Esta aplicación ha transformado la forma en que gestiono mis tareas. ¡Es muy fácil de usar y me ayuda a mantenerme organizada!”',
               author: 'Ana G.',
             ),
-            const _TestimonialCard(
+            _TestimonialCard(
               text:
-                  '“El tablero estilo Kanban es simplemente genial. Me permite visualizar mi flujo de trabajo de una manera muy clara.”',
+              '“El tablero estilo Kanban es simplemente genial. Me permite visualizar mi flujo de trabajo de una manera muy clara.”',
               author: 'Luis P.',
             ),
-            const _TestimonialCard(
+            _TestimonialCard(
               text:
-                  '“Me encanta la funcionalidad de colaboración. Trabajar en equipo nunca ha sido tan fácil y eficiente.”',
+              '“Me encanta la funcionalidad de colaboración. Trabajar en equipo nunca ha sido tan fácil y eficiente.”',
               author: 'Marta R.',
             ),
-            const SizedBox(height: 30),
+            SizedBox(height: 30),
           ],
         ),
       ),
@@ -185,7 +152,6 @@ class PageInit extends StatelessWidget {
 }
 
 // Widgets auxiliares
-
 class _ServiceCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -214,7 +180,7 @@ class _ServiceCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, size: 40, color: const Color(0xFF2563EB)),
+          Icon(icon, size: 40, color: Color(0xFF2563EB)),
           const SizedBox(height: 12),
           Text(
             title,
@@ -264,10 +230,11 @@ class _TestimonialCard extends StatelessWidget {
               style: const TextStyle(fontSize: 14, color: Colors.black87),
               textAlign: TextAlign.center),
           const SizedBox(height: 10),
-          const Text('- ',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold, color: Colors.black54)),
-          Text(author, style: const TextStyle(color: Colors.black54)),
+          Text(
+            '- $author',
+            style: const TextStyle(
+                fontWeight: FontWeight.bold, color: Colors.black54),
+          ),
         ],
       ),
     );
