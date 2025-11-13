@@ -62,6 +62,26 @@ class PageInit extends StatelessWidget {
               style: TextStyle(fontSize: 15, color: Colors.black54),
             ),
             const SizedBox(height: 20),
+            // Sección añadida: Qué Hacemos (texto proporcionado por el usuario)
+            const Text(
+              'Qué Hacemos',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'En nuestra plataforma, nos dedicamos a facilitar la vida de nuestros usuarios al proporcionar una '
+              'herramienta robusta y visualmente intuitiva para la gestión de tareas. Ya seas un administrador que '
+              'necesita organizar múltiples proyectos, o un usuario regular que busca mantenerse al tanto de sus tareas '
+              'diarias, nuestra plataforma está diseñada para adaptarse a tus necesidades.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 15, color: Colors.black54),
+            ),
+            const SizedBox(height: 20),
             Wrap(
               alignment: WrapAlignment.center,
               spacing: 10,
