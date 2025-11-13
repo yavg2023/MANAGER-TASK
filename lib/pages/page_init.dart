@@ -11,11 +11,11 @@ class PageInit extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 2,
         automaticallyImplyLeading: false, // 👈 elimina el ícono de menú
-        title: Row(
+        title: const Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            const SizedBox(width: 8),
-            const Text(
+            SizedBox(width: 8),
+            Text(
               'TASK MANAGER',
               style: TextStyle(
                 color: Colors.black87,
@@ -180,7 +180,7 @@ class _ServiceCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, size: 40, color: Color(0xFF2563EB)),
+          Icon(icon, size: 40, color: const Color(0xFF2563EB)),
           const SizedBox(height: 12),
           Text(
             title,
