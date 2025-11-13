@@ -2,6 +2,7 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import '../services/api.dart';
+import '../utils/auth_utils.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -75,7 +76,9 @@ class _LoginPageState extends State<LoginPage> {
                           final res = await Api.login(_emailController.text, _passwordController.text);
                           if (!mounted) return;
                           if (res != null && res['token'] != null) {
-                            Navigator.pushReplacementNamed(context, '/dashboard');
+                            // Navegar según el rol del usuario
+                            final homeRoute = AuthUtils.getHomeRouteForEmail(_emailController.text);
+                            Navigator.pushReplacementNamed(context, homeRoute);
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Credenciales incorrectas')));
                           }
