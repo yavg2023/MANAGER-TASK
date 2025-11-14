@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'pages/login.dart';
-import 'pages/dashboard.dart';
 import 'pages/tasks.dart';
 import 'pages/task_form.dart';
 import 'services/auth_service.dart';
 import 'pages/page_init.dart';
 import 'pages/register.dart';
 import 'pages/admin_home.dart';
+import 'pages/userDashboard.dart';
 
 void main() {
   runApp(const TaskManagerApp());
@@ -36,11 +36,11 @@ class TaskManagerApp extends StatelessWidget {
         routes: {
           '/pageInit': (context) => const PageInit(),
           '/login': (context) => const LoginPage(),
-          '/dashboard': (context) => const DashboardPage(),
           '/tasks': (context) => const TasksPage(),
           '/task_form': (context) => const TaskFormPage(),
           '/register': (context) => const RegisterPage(),
           '/admin-dashboard': (context) => const AdminHome(),
+          '/userDashboard': (_) => const UserDashboard(),
         },
       ),
     );

@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import '../services/api.dart';
 import '../utils/auth_utils.dart';
+import '../utils/hardcoded_users.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -62,7 +63,11 @@ class _LoginPageState extends State<LoginPage> {
                         labelText: 'Contraseña',
                         suffixIcon: IconButton(
                           icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => setState(() => _obscure = !_obscure),
+                          onPressed: () {
+                            setState(() {
+                              _obscure = !_obscure;
+                            });
+                          },
                         ),
                       ),
                       validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null,
@@ -73,15 +78,57 @@ class _LoginPageState extends State<LoginPage> {
                       child: ElevatedButton(
                         onPressed: () async {
                           if (!_formKey.currentState!.validate()) return;
-                          final res = await Api.login(_emailController.text, _passwordController.text);
-                          if (!mounted) return;
-                          if (res != null && res['token'] != null) {
-                            // Navegar según el rol del usuario
-                            final homeRoute = AuthUtils.getHomeRouteForEmail(_emailController.text);
-                            Navigator.pushReplacementNamed(context, homeRoute);
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Credenciales incorrectas')));
+
+                          final email = _emailController.text.trim();
+                          final password = _passwordController.text.trim();
+
+                          // 1️⃣ Verificar si el correo existe entre los quemados
+                          final userExistsInHardcoded = HardcodedUsers.userExists(email);
+
+                          if (userExistsInHardcoded) {
+                            final role = HardcodedUsers.getRole(email, password);
+
+                            if (role == "admin") {
+                              Navigator.pushReplacementNamed(context, "/admin-dashboard");
+                              return;
+                            }
+
+                            if (role == "user") {
+                              Navigator.pushReplacementNamed(context, "/userDashboard");
+                              return;
+                            }
+
+                            // Si el correo existe pero la contraseña está mal
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Contraseña incorrecta')),
+                            );
+                            return;
                           }
+
+                          // 2️⃣ Si NO existe en quemados → validar con API
+                          final res = await Api.login(email, password);
+                          print("RESPUESTA API ===> $res");
+                          if (!mounted) return;
+
+                          // Si API responde que no encuentra el correo
+                          if (res != null && res["error"] == "email_not_found") {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Este correo no existe')),
+                            );
+                            return;
+                          }
+
+                          // Si API sí encuentra correo y da token
+                          if (res != null && res["token"] != null) {
+                            final homeRoute = AuthUtils.getHomeRouteForEmail(email);
+                            Navigator.pushReplacementNamed(context, homeRoute);
+                            return;
+                          }
+
+                          // Si API responde pero sin token → contraseña incorrecta
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Credenciales incorrectas')),
+                          );
                         },
                         child: const Padding(
                           padding: EdgeInsets.symmetric(vertical: 14.0),
@@ -89,8 +136,12 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 8),
-                    TextButton(onPressed: () => Navigator.pushNamed(context, '/register'), child: const Text('Regístrate')),
+                    TextButton(
+                      onPressed: () => Navigator.pushNamed(context, '/register'),
+                      child: const Text('Regístrate'),
+                    ),
                   ],
                 ),
               ),
@@ -101,4 +152,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-
