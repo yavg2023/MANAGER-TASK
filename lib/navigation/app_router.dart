@@ -4,6 +4,7 @@ import '../screens/security/login_screen.dart';
 import '../screens/security/register_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/tasks/task_detail_screen.dart';
+import '../pages/task_form.dart'; // 👈 Este import está bien
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -20,6 +21,10 @@ class AppRouter {
         final args = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(
             builder: (_) => TaskDetailScreen(task: args?['task']));
+      case '/task-form':
+        final args = settings.arguments as Map<String, dynamic>?;
+        return MaterialPageRoute(
+            builder: (_) => TaskFormPage(task: args?['task'])); 
       default:
         return MaterialPageRoute(
             builder: (_) => const Scaffold(
