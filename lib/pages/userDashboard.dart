@@ -126,7 +126,7 @@ class _UserDashboardState extends State<UserDashboard> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text(
-          "Mis Tareas",
+          "Dashboard de usuario",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.blue,
