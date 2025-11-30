@@ -10,7 +10,7 @@ class PageInit extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 2,
-        automaticallyImplyLeading: false, // 👈 elimina el ícono de menú
+        automaticallyImplyLeading: false,
         title: const Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -48,13 +48,13 @@ class PageInit extends StatelessWidget {
           ),
         ],
       ),
-      body: const SingleChildScrollView(
-        padding: EdgeInsets.all(20),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(height: 20),
-            Text(
+            const SizedBox(height: 20),
+            const Text(
               'Bienvenido a la Aplicación de Gestión de Tareas',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -63,16 +63,16 @@ class PageInit extends StatelessWidget {
                 color: Colors.black87,
               ),
             ),
-            SizedBox(height: 10),
-            Text(
+            const SizedBox(height: 10),
+            const Text(
               'Esta es tu aplicación sencilla para gestionar tareas diarias.\n'
-                  'Para comenzar, por favor regístrate en nuestra plataforma o inicia sesión si ya tienes una cuenta, '
-                  'y empieza a gestionar tus tareas.',
+              'Para comenzar, por favor regístrate en nuestra plataforma o inicia sesión si ya tienes una cuenta, '
+              'y empieza a gestionar tus tareas.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 15, color: Colors.black54),
             ),
-            SizedBox(height: 20),
-            Text(
+            const SizedBox(height: 20),
+            const Text(
               'Qué Hacemos',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -81,26 +81,26 @@ class PageInit extends StatelessWidget {
                 color: Colors.black87,
               ),
             ),
-            SizedBox(height: 10),
-            Text(
+            const SizedBox(height: 10),
+            const Text(
               'En nuestra plataforma, nos dedicamos a facilitar la vida de nuestros usuarios al proporcionar una '
-                  'herramienta robusta y visualmente intuitiva para la gestión de tareas. Ya seas un administrador que '
-                  'necesita organizar múltiples proyectos, o un usuario regular que busca mantenerse al tanto de sus tareas '
-                  'diarias, nuestra plataforma está diseñada para adaptarse a tus necesidades.',
+              'herramienta robusta y visualmente intuitiva para la gestión de tareas. Ya seas un administrador que '
+              'necesita organizar múltiples proyectos, o un usuario regular que busca mantenerse al tanto de sus tareas '
+              'diarias, nuestra plataforma está diseñada para adaptarse a tus necesidades.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 15, color: Colors.black54),
             ),
-            SizedBox(height: 24),
-            SizedBox(height: 40),
-            Text(
+            const SizedBox(height: 24),
+            const SizedBox(height: 40),
+            const Text(
               'Servicios Destacados',
               style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87),
             ),
-            SizedBox(height: 20),
-            Wrap(
+            const SizedBox(height: 20),
+            const Wrap(
               alignment: WrapAlignment.center,
               spacing: 20,
               runSpacing: 20,
@@ -109,41 +109,105 @@ class PageInit extends StatelessWidget {
                   icon: Icons.check_circle_outline,
                   title: 'Gestión Eficiente',
                   description:
-                  'Administra tus tareas con facilidad y organiza tu trabajo de manera intuitiva con nuestro tablero estilo Kanban.',
+                      'Administra tus tareas con facilidad y organiza tu trabajo de manera intuitiva con nuestro tablero estilo Kanban.',
                 ),
                 _ServiceCard(
                   icon: Icons.star_border,
                   title: 'Usabilidad Amigable',
                   description:
-                  'Disfruta de una experiencia de usuario fluida y amigable, diseñada para mejorar tu productividad.',
+                      'Disfruta de una experiencia de usuario fluida y amigable, diseñada para mejorar tu productividad.',
                 ),
               ],
             ),
-            SizedBox(height: 40),
-            Text(
+            const SizedBox(height: 40),
+            const Text(
               'Testimonios',
               style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87),
             ),
-            SizedBox(height: 20),
-            _TestimonialCard(
+            const SizedBox(height: 20),
+            const _TestimonialCard(
               text:
-              '“Esta aplicación ha transformado la forma en que gestiono mis tareas. ¡Es muy fácil de usar y me ayuda a mantenerme organizada!”',
+                  '"Esta aplicación ha transformado la forma en que gestiono mis tareas. ¡Es muy fácil de usar y me ayuda a mantenerme organizada!"',
               author: 'Ana G.',
             ),
-            _TestimonialCard(
+            const _TestimonialCard(
               text:
-              '“El tablero estilo Kanban es simplemente genial. Me permite visualizar mi flujo de trabajo de una manera muy clara.”',
+                  '"El tablero estilo Kanban es simplemente genial. Me permite visualizar mi flujo de trabajo de una manera muy clara."',
               author: 'Luis P.',
             ),
-            _TestimonialCard(
+            const _TestimonialCard(
               text:
-              '“Me encanta la funcionalidad de colaboración. Trabajar en equipo nunca ha sido tan fácil y eficiente.”',
+                  '"Me encanta la funcionalidad de colaboración. Trabajar en equipo nunca ha sido tan fácil y eficiente."',
               author: 'Marta R.',
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 40),
+            
+            // NUEVO: Botón Contáctenos
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.blue[200]!),
+              ),
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.contact_support,
+                    size: 48,
+                    color: Colors.blue,
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    '¿Necesitas ayuda?',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Estamos aquí para ayudarte. Contáctanos y resolveremos tus dudas.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/contact');
+                      },
+                      icon: const Icon(Icons.email, color: Colors.white),
+                      label: const Text(
+                        'Contáctenos',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 30),
           ],
         ),
       ),

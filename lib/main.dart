@@ -8,6 +8,7 @@ import 'pages/page_init.dart';
 import 'pages/register.dart';
 import 'pages/admin_home.dart';
 import 'pages/userDashboard.dart';
+import 'pages/contact_us.dart';
 
 void main() {
   runApp(const TaskManagerApp());
@@ -41,6 +42,7 @@ class TaskManagerApp extends StatelessWidget {
           '/register': (context) => const RegisterPage(),
           '/admin-dashboard': (context) => const AdminHome(),
           '/userDashboard': (_) => const UserDashboard(),
+          '/contact': (_) => const ContactUsPage(), 
         },
       ),
     );
