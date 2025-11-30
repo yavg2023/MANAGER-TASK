@@ -18,4 +18,12 @@ class AuthUtils {
     }
     return '/tasks';
   }
+
+
+  static int? _userId;
+
+  static void setUserId(int id) => _userId = id;
+  static int? get userId => _userId;
+
+
 }

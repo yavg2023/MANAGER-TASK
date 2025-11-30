@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
-import '../services/api.dart';
+import '../services/tasks_insertUpdate_service.dart';
+import '../utils/auth_utils.dart';
 
 class TaskFormPage extends StatefulWidget {
   final Map? task;
@@ -15,11 +16,10 @@ class _TaskFormPageState extends State<TaskFormPage> {
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   final _dueDateCtrl = TextEditingController();
-  final _responsibleCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   
-  String _selectedPriority = 'medium';
-  String _selectedStatus = 'pending';
+  String _selectedPriority = 'media';
+  String _selectedStatus = 'pendiente';
   bool _loading = false;
   DateTime? _selectedDate;
 
@@ -30,10 +30,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
       _titleCtrl.text = widget.task!['title'] ?? '';
       _descCtrl.text = widget.task!['description'] ?? '';
       _dueDateCtrl.text = widget.task!['due_date'] ?? '';
-      _responsibleCtrl.text = widget.task!['responsible'] ?? '';
       _emailCtrl.text = widget.task!['email'] ?? '';
-      _selectedPriority = widget.task!['priority'] ?? 'medium';
-      _selectedStatus = widget.task!['status'] ?? 'pending';
+      _selectedPriority = widget.task!['priority'] ?? 'media';
+      _selectedStatus = widget.task!['status'] ?? 'pendiente';
       
       if (widget.task!['due_date'] != null && widget.task!['due_date'].isNotEmpty) {
         try {
@@ -50,7 +49,6 @@ class _TaskFormPageState extends State<TaskFormPage> {
     _titleCtrl.dispose();
     _descCtrl.dispose();
     _dueDateCtrl.dispose();
-    _responsibleCtrl.dispose();
     _emailCtrl.dispose();
     super.dispose();
   }
@@ -89,16 +87,28 @@ class _TaskFormPageState extends State<TaskFormPage> {
       return;
     }
 
+    // Validar que el userId esté disponible
+    final userId = AuthUtils.userId;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: No se pudo obtener el usuario. Por favor inicia sesión nuevamente.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _loading = true);
     
     final body = {
       'title': _titleCtrl.text.trim(),
       'description': _descCtrl.text.trim(),
-      'due_date': _dueDateCtrl.text.trim(),
+      'due_date': _dueDateCtrl.text.trim().isEmpty ? null : _dueDateCtrl.text.trim(),
       'priority': _selectedPriority,
       'status': _selectedStatus,
-      'responsible': _responsibleCtrl.text.trim(),
       'email': _emailCtrl.text.trim(),
+      'user_id': userId, // Agregar el user_id obtenido de AuthUtils
     };
     
     bool ok = false;
@@ -283,7 +293,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
                                       icon: const Icon(Icons.arrow_drop_down),
                                       items: const [
                                         DropdownMenuItem(
-                                          value: 'high',
+                                          value: 'alta',
                                           child: Row(
                                             children: [
                                               Icon(Icons.arrow_upward, color: Colors.red, size: 18),
@@ -293,7 +303,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
                                           ),
                                         ),
                                         DropdownMenuItem(
-                                          value: 'medium',
+                                          value: 'media',
                                           child: Row(
                                             children: [
                                               Icon(Icons.remove, color: Colors.orange, size: 18),
@@ -303,7 +313,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
                                           ),
                                         ),
                                         DropdownMenuItem(
-                                          value: 'low',
+                                          value: 'baja',
                                           child: Row(
                                             children: [
                                               Icon(Icons.arrow_downward, color: Colors.blue, size: 18),
@@ -353,7 +363,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
                                       icon: const Icon(Icons.arrow_drop_down),
                                       items: const [
                                         DropdownMenuItem(
-                                          value: 'pending',
+                                          value: 'pendiente',
                                           child: Row(
                                             children: [
                                               Icon(Icons.pending, color: Colors.red, size: 18),
@@ -363,7 +373,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
                                           ),
                                         ),
                                         DropdownMenuItem(
-                                          value: 'in_progress',
+                                          value: 'en progreso',
                                           child: Row(
                                             children: [
                                               Icon(Icons.sync, color: Colors.orange, size: 18),
@@ -373,7 +383,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
                                           ),
                                         ),
                                         DropdownMenuItem(
-                                          value: 'done',
+                                          value: 'completada',
                                           child: Row(
                                             children: [
                                               Icon(Icons.check_circle, color: Colors.green, size: 18),
@@ -397,29 +407,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      
-                      // Campo Responsable
-                      TextFormField(
-                        controller: _responsibleCtrl,
-                        decoration: InputDecoration(
-                          labelText: 'Responsable *',
-                          hintText: 'Nombre del responsable',
-                          prefixIcon: const Icon(Icons.person),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey[50],
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'El responsable es obligatorio';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      
+              
                       // Campo Email
                       TextFormField(
                         controller: _emailCtrl,
